@@ -1,0 +1,7 @@
+{"layout": "flow", "eyebrow": "evaboot-labs · ai-prospecting-brief", "headline": "Who to contact today.",
+ "subline": "Sales Navigator signals in. Ten people, why now and the next step out, every morning.",
+ "nodes": [{"label": "01 · Signals", "title": "Evaboot", "caption": "Changed jobs, posted"},
+           {"label": "02 · Score", "title": "brief.py", "caption": "Signals merged, ranked"},
+           {"label": "03 · Judge", "title": "AI Agent", "caption": "Fit, why now, next step"},
+           {"label": "04 · Result", "title": "Your brief", "caption": "10 people, daily"}],
+ "spec": "server <em>mcp.evaboot.com/mcp</em> · only new people each day"}

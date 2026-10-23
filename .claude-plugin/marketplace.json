@@ -1,0 +1,14 @@
+{
+  "name": "evaboot-labs-ai-prospecting-brief",
+  "owner": { "name": "Evaboot", "url": "https://evaboot.com" },
+  "metadata": {
+    "description": "A daily AI prospecting brief: Sales Navigator signals in, who to contact today, why now and the next step out."
+  },
+  "plugins": [
+    {
+      "name": "ai-prospecting-brief",
+      "source": "./",
+      "description": "Every morning, an AI Agent takes the new people from your Sales Navigator signal searches (changed jobs, posted on LinkedIn) through Evaboot, scores their signals, judges who fits, and writes who to contact today, why now and the next step."
+    }
+  ]
+}

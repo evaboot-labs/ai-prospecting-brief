@@ -1,0 +1,13 @@
+{
+  "name": "ai-prospecting-brief",
+  "version": "1.0.0",
+  "description": "Every morning, an AI Agent takes the new people from your Sales Navigator signal searches (changed jobs, posted on LinkedIn) through Evaboot, scores their signals, judges who fits, and writes who to contact today, why now and the next step.",
+  "author": { "name": "Evaboot", "url": "https://evaboot.com" },
+  "homepage": "https://evaboot.com/blog/ai-prospecting-tools",
+  "repository": "https://github.com/evaboot-labs/ai-prospecting-brief",
+  "license": "MIT",
+  "privacyPolicyUrl": "https://evaboot.com/privacy-policy",
+  "keywords": ["lead-generation", "ai-agent", "prospecting", "sales-navigator", "evaboot", "mcp"],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json"
+}
