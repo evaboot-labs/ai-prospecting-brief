@@ -1,0 +1,516 @@
+{
+  "name": "AI prospecting brief (Evaboot + Claude)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "evaboot-brief/:signal",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "8ab79f41-ef9e-4c72-aa0a-d47993a20c6f",
+      "name": "New people from Evaboot",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "d0a19989-2195-4ff3-91c4-49fd6bd0838a"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "463c1efd-102e-4072-827e-0883cfdb526f",
+              "name": "signals_tab_url",
+              "type": "string",
+              "value": "PASTE_THE_SIGNALS_TAB_URL_WITH_GID"
+            },
+            {
+              "id": "a8766fc7-110c-49c6-b0dd-782f44228120",
+              "name": "brief_tab_url",
+              "type": "string",
+              "value": "PASTE_THE_BRIEF_TAB_URL_WITH_GID"
+            },
+            {
+              "id": "66727f85-7b05-4324-a0d0-e385fd71a09e",
+              "name": "top",
+              "type": "string",
+              "value": "10"
+            },
+            {
+              "id": "002096b0-dcc9-4647-8c62-6feaea4e5bb1",
+              "name": "buyers",
+              "type": "string",
+              "value": "Heads, directors and VPs of Revenue Operations, Sales Operations or GTM Operations at US B2B software companies of 51 to 500 employees. Not a fit: consultants, advisors, fractional and independent roles; sales roles without operations in the title; companies under 51 or over 500."
+            },
+            {
+              "id": "a5073c37-d028-49b6-b8f0-dcf1bba8db2d",
+              "name": "offer",
+              "type": "string",
+              "value": "Evaboot exports Sales Navigator searches to clean lists with verified emails, and can send each week's new people straight to the CRM."
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "0218bba8-aaf2-45b1-ba0f-4ec4ec9586cb",
+      "name": "Collect settings",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\n// One row per person in the Evaboot run, tagged with the signal from the webhook path.\nconst signal = $json.params.signal;\nconst prospects = $json.body.prospects || [];\nconst num = v => { const n = parseFloat(String(v ?? '').replace(/[,%]/g, '')); return isNaN(n) ? '' : n; };\nconst words = s => String(s || '').split(/\\s+/).join(' ').trim();\nconst now = new Date().toISOString();\nreturn prospects.map(p => {\n  const y = num(p['Years in Position']), m = num(p['Months in Position']);\n  return { json: {\n    'Received': now, 'Signal': signal,\n    'Id': p['Linkedin URL Unique ID'] || p['Linkedin URL Public'] || p['Full Name'],\n    'Name': p['Full Name'] || '', 'Title': String(p['Current Job'] || '').trim(), 'Company': p['Company Name'] || '',\n    'Employees': p['Company Employee Range'] || '', 'Growth 1y %': num(p['Company Employee Growth 1 Year (%)']),\n    'Sales team': num(p['Sales Team Size']), 'Months in role': (y === '' && m === '') ? '' : (y || 0) * 12 + (m || 0),\n    'Email': p['Email'] || '', 'Email status': p['Email Status'] || 'not found',\n    'Headline': words(p['Profile Headline']).slice(0, 200), 'Company description': words(p['Company Description']).slice(0, 300),\n    'LinkedIn': p['Linkedin URL Public'] || '',\n  } };\n});\n"
+      },
+      "id": "126c9d0c-d51f-4bea-844d-38a13954f53a",
+      "name": "Signal rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "={{ $('Collect settings').first().json.signals_tab_url }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "url",
+          "value": "={{ $('Collect settings').first().json.signals_tab_url }}"
+        },
+        "options": {
+          "useAppend": true
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        }
+      },
+      "id": "07afe97c-9aca-4e51-a310-611eb7ac79a7",
+      "name": "Add to Signals",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        660,
+        0
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * 1-5"
+            }
+          ]
+        }
+      },
+      "id": "e9b870cb-51ff-43ce-b8b1-6f6317496388",
+      "name": "Every weekday at 8",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "00022c07-30a3-43c8-a588-79ea7caabcb4",
+              "name": "signals_tab_url",
+              "type": "string",
+              "value": "PASTE_THE_SIGNALS_TAB_URL_WITH_GID"
+            },
+            {
+              "id": "81d57357-b8c0-4ad1-9f23-c3e71e58f53a",
+              "name": "brief_tab_url",
+              "type": "string",
+              "value": "PASTE_THE_BRIEF_TAB_URL_WITH_GID"
+            },
+            {
+              "id": "ba16abaa-ac11-4127-8a95-133ed6fbc808",
+              "name": "top",
+              "type": "string",
+              "value": "10"
+            },
+            {
+              "id": "1cd183ec-c7d4-4c17-92cd-f762ed071e0c",
+              "name": "buyers",
+              "type": "string",
+              "value": "Heads, directors and VPs of Revenue Operations, Sales Operations or GTM Operations at US B2B software companies of 51 to 500 employees. Not a fit: consultants, advisors, fractional and independent roles; sales roles without operations in the title; companies under 51 or over 500."
+            },
+            {
+              "id": "644b9429-364f-4ac4-ae4b-fc111a3db737",
+              "name": "offer",
+              "type": "string",
+              "value": "Evaboot exports Sales Navigator searches to clean lists with verified emails, and can send each week's new people straight to the CRM."
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "513c614e-396e-4c9a-aeed-1fff1c2e61c3",
+      "name": "Brief settings",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "={{ $('Brief settings').first().json.signals_tab_url }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "url",
+          "value": "={{ $('Brief settings').first().json.signals_tab_url }}"
+        },
+        "options": {}
+      },
+      "id": "04d28d45-5d9b-407f-9b0f-db70b9855f86",
+      "name": "Signals",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        440,
+        360
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "={{ $('Brief settings').first().json.brief_tab_url }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "url",
+          "value": "={{ $('Brief settings').first().json.brief_tab_url }}"
+        },
+        "options": {}
+      },
+      "id": "c97ffb2a-346d-40f1-9502-13e1f08abf5f",
+      "name": "Earlier briefs",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        660,
+        360
+      ],
+      "alwaysOutputData": true,
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\n// Same as brief.py facts: people received in the last 7 days and never in a brief, signals merged and scored.\n// Someone over today's cap is not in the Brief tab, so they compete again tomorrow.\nconst WEIGHTS = { changed_jobs: 3, posted: 2, new_in_role: 1, fast_growth: 2, hypergrowth: 1, safe_email: 1 };\nconst shown = new Set($('Earlier briefs').all().map(r => String(r.json['Id'] || '')).filter(Boolean));\nconst since = Date.now() - 7 * 24 * 3600 * 1000;\nconst people = {};\nfor (const { json: r } of $('Signals').all()) {\n  if (!r['Id'] || shown.has(String(r['Id'])) || new Date(r['Received']).getTime() < since) continue;\n  const p = people[r['Id']] ??= { ...r, signals: new Set() };\n  p.signals.add(r['Signal']);\n}\nconst top = Number($('Brief settings').first().json.top) || 10;\nconst rows = Object.values(people).map(p => {\n  const months = p['Months in role'] === '' ? null : Number(p['Months in role']);\n  const growth = p['Growth 1y %'] === '' ? null : Number(p['Growth 1y %']);\n  if (months !== null && months < 3) p.signals.add('new_in_role');\n  if (growth !== null && growth >= 30) p.signals.add('fast_growth');\n  if (growth !== null && growth >= 100) p.signals.add('hypergrowth');\n  if (String(p['Email status']).toLowerCase() === 'safe') p.signals.add('safe_email');\n  const signals = [...p.signals].sort();\n  return { ...p, signals, score: signals.reduce((s, x) => s + (WEIGHTS[x] || 0), 0) };\n}).sort((a, b) => b.score - a.score || a.Name.localeCompare(b.Name));\nif (!rows.length) return [];\n// Judge a few more than the brief holds: some will not fit.\nreturn [{ json: { people: rows.slice(0, top + 6), total: rows.length } }];\n"
+      },
+      "id": "5d0f0e87-8255-435b-a48b-1deba15ec5c1",
+      "name": "Merge and score",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        360
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "hasOutputParser": true,
+        "text": "={{ JSON.stringify($json.people.map(p => ({ id: p.Id, first_name: String(p.Name).split(' ')[0], signals: p.signals, title: p.Title, company: p.Company, employees: p.Employees, growth_1y_pct: p['Growth 1y %'], sales_team: p['Sales team'], months_in_role: p['Months in role'], email_status: p['Email status'], headline: p.Headline, company_description: p['Company description'] }))) }}",
+        "options": {
+          "systemMessage": "=You write a daily prospecting brief. For each person in the JSON (their signals, title, company, size, growth, headline), decide if they fit the buyers below, then give one line on why now and the next step. Use only the facts given; never invent anything.\n\nReturn {people: [{id, fit, reason, next_step, action}]}:\n- fit: true or false. A person outside the buyers is not a fit; the reason then says why in a few words.\n- reason: one line under 30 words, built on their own signals and profile.\n- next_step: \"email\" only if email_status is safe, otherwise \"linkedin\"; \"call\" only with a strong reason; \"watch\" when it is too early.\n- action: one concrete sentence on what to say or do, specific to this person. Do not start it with the step name.\n- Never guess anyone's gender: no he, she, him or her. Use the first name, \"they\" or the role.\n\nBuyers:\n{{ $('Brief settings').first().json.buyers }}\n\nWhat we sell:\n{{ $('Brief settings').first().json.offer }}",
+          "maxIterations": 3
+        }
+      },
+      "id": "0e7065e1-ba62-496a-a273-dfb75913bb68",
+      "name": "Judge and write",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        1100,
+        360
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-5-5",
+          "cachedResultName": "claude-sonnet-5-5"
+        },
+        "options": {
+          "maxTokensToSample": 6000
+        }
+      },
+      "id": "905a89fe-be49-4fc1-b0bc-0b1841e3e98e",
+      "name": "Claude",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        1060,
+        560
+      ],
+      "credentials": {
+        "anthropicApi": {
+          "id": "",
+          "name": "Anthropic"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"required\": [\n    \"people\"\n  ],\n  \"properties\": {\n    \"people\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"required\": [\n          \"id\",\n          \"fit\",\n          \"reason\"\n        ],\n        \"properties\": {\n          \"id\": {\n            \"type\": \"string\"\n          },\n          \"fit\": {\n            \"type\": \"boolean\"\n          },\n          \"reason\": {\n            \"type\": \"string\"\n          },\n          \"next_step\": {\n            \"type\": \"string\"\n          },\n          \"action\": {\n            \"type\": \"string\"\n          }\n        }\n      }\n    }\n  }\n}"
+      },
+      "id": "6bb74863-f0fe-4279-bf35-56daa251b583",
+      "name": "Verdicts",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1220,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\n// brief.py check's required fields; an incomplete verdict is dropped, and an email step without a safe\n// email becomes linkedin. Ranked by score like brief.py render, not by the order Claude answered in.\nconst LABELS = { changed_jobs: 'changed jobs', posted: 'posted on LinkedIn', new_in_role: 'under 3 months in role',\n                 safe_email: 'verified email' };\nconst STEPS = new Set(['email', 'linkedin', 'call', 'watch']);\nconst verdicts = Object.fromEntries(($json.output.people || []).map(v => [v.id, v]));\nconst top = Number($('Brief settings').first().json.top) || 10;\nconst today = new Date().toISOString().slice(0, 10);\nconst out = [];\nlet rank = 0;\nfor (const p of $('Merge and score').first().json.people) {\n  const v = verdicts[p.Id];\n  if (!v) continue;\n  const reason = String(v.reason || '').trim();\n  let step = v.next_step, action = String(v.action || '').trim();\n  if (v.fit && (!STEPS.has(step) || !action || !reason)) continue;\n  if (v.fit && step === 'email' && String(p['Email status']).toLowerCase() !== 'safe') step = 'linkedin';\n  const signals = p.signals.map(s => s === 'fast_growth' ? `company +${Math.round(p['Growth 1y %'])}% in a year`\n    : (s === 'hypergrowth' ? '' : (LABELS[s] || s))).filter(Boolean).join(', ');\n  if (v.fit && rank >= top) continue;  // over today's brief: tomorrow it is new again only if a new run brings it\n  out.push({ json: {\n    'Date': today, 'Rank': v.fit ? ++rank : 'not a fit', 'Id': p.Id, 'Name': p.Name, 'Title': p.Title,\n    'Company': p.Company, 'Signals': signals, 'Why now': reason, 'Next step': v.fit ? step : '',\n    'Action': v.fit ? action : '', 'Email': v.fit && step === 'email' ? p.Email : '', 'LinkedIn': p.LinkedIn,\n  } });\n}\nreturn out.sort((a, b) => (typeof a.json.Rank === 'number' ? a.json.Rank : 99) - (typeof b.json.Rank === 'number' ? b.json.Rank : 99));\n"
+      },
+      "id": "0b7acc2d-494d-4809-9574-abfa4976e2cc",
+      "name": "Check and rank",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "={{ $('Brief settings').first().json.brief_tab_url }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "url",
+          "value": "={{ $('Brief settings').first().json.brief_tab_url }}"
+        },
+        "options": {},
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        }
+      },
+      "id": "48540127-bed3-41dc-a8c7-98d84f922ce8",
+      "name": "Add to Brief",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1660,
+        360
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "New people from Evaboot": {
+      "main": [
+        [
+          {
+            "node": "Collect settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect settings": {
+      "main": [
+        [
+          {
+            "node": "Signal rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Signal rows": {
+      "main": [
+        [
+          {
+            "node": "Add to Signals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every weekday at 8": {
+      "main": [
+        [
+          {
+            "node": "Brief settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Brief settings": {
+      "main": [
+        [
+          {
+            "node": "Signals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Signals": {
+      "main": [
+        [
+          {
+            "node": "Earlier briefs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Earlier briefs": {
+      "main": [
+        [
+          {
+            "node": "Merge and score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge and score": {
+      "main": [
+        [
+          {
+            "node": "Judge and write",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Judge and write": {
+      "main": [
+        [
+          {
+            "node": "Check and rank",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check and rank": {
+      "main": [
+        [
+          {
+            "node": "Add to Brief",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Judge and write",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verdicts": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Judge and write",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}
